@@ -1,0 +1,7 @@
+# Backup directory.
+backup/
+
+# Misc.
+.DS_Store
+Thumbs.db
+
