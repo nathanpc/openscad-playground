@@ -8,10 +8,10 @@
 // For more information about the spec: https://support.dynabook.com/support/viewContentDetail?contentId=108256
 
 // Generation parameters.
-nslots2 = 7;      // Number of Type II slots.
-nslots3 = 4;      // Number of Type III slots.
+nslots2 = 1;      // Number of Type II slots.
+nslots3 = 1;      // Number of Type III slots.
 spacing = 5;      // Spacing between slots.
-expo_depth = 10;  // Depth of card to leave exposed in front.
+expo_depth = 15;  // Depth of card to leave exposed in front.
 
 // PCMCIA card dimensions.
 pcmcia_depth = 85.6;     // Overall depth.
