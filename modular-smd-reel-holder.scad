@@ -77,12 +77,20 @@ module smd_reel(outer, hole, tape = 9, gutter = 60, wall = 1.5) {
  * @param rod_diam   Threaded rod support hole diameter.
  * @param gap        Gap betweeen the reel and the outer frame.
  * @param wall       Outer wall thickness.
+ * @param test_rest  Builds only the tape rest section for testing.
  */
 module holder_module(reel_outer, reel_hole, reel_width, rod_diam,
-		gap = 5, wall = 3) {
+		gap = 5, wall = 3, test_rest = false) {
 	gap2 = gap * 2;
 	tape_slit = 2;
 	tape_rest = 4;
+	
+	// Position of the center of the tape rest feature.
+	tape_rest_pos = [
+		(reel_outer / 2) + gap - tape_rest, 
+		(-reel_outer / 2) + 30, 
+		0
+	];
 	
 	// Side wall generator.
 	module side_wall(depth) {
@@ -104,15 +112,27 @@ module holder_module(reel_outer, reel_hole, reel_width, rod_diam,
 			cube([tape_slit, 100, depth], center = true);
 		
 		// Tape park slit.
-		translate([(reel_outer / 2) + gap - tape_rest, (-reel_outer / 2) + 20, 0])
+		translate(tape_rest_pos)
 		difference() {
-			// Slit.
+			// Circuit slit.
 			translate([tape_rest * 3, 0, 0])
-				cylinder(h = depth, d = tape_rest * 8, center = true);
+				cylinder(h = depth, d = tape_rest * 10, center = true);
 
 			// Holding peg.
 			translate([tape_rest / 1, 0, 0])
-				cylinder(h = depth, d = tape_rest * 2, center = true);
+			difference() {
+				cylinder(h = depth, d = tape_rest * 4, center = true);
+				
+				// Infill for 3D printers.
+				translate([0, -tape_rest * 1.25, reel_width / 2])
+				#for (i = [ 1.75 : 2 : tape_rest ]) {
+					for (j = [ 0 : 2.5 : tape_rest * 2.5 ]) {
+						translate([-i, j, 0])
+						if ((j < 2.5) || (j > (tape_rest * 2.5) - 2.5)) 
+							cube([1, 1, reel_width - 2], center = true);
+					}
+				}
+			}
 		}
 		
 		// Reel pocket.
@@ -130,23 +150,36 @@ module holder_module(reel_outer, reel_hole, reel_width, rod_diam,
 			cylinder(h = 100, d = diam, center = true);
 	}
 
-	difference() {
-		#union() {
-			// Center axle.
-			translate([0, 0, (reel_width / 2) + wall])
-				cylinder(h = reel_width, d = reel_hole - 1,
-					center = true);
+	intersection() {
+		// The entire holder.
+		difference() {
+			#union() {
+				// Center axle.
+				translate([0, 0, (reel_width / 2) + wall])
+					cylinder(h = reel_width, d = reel_hole - 1,
+						center = true);
 
-			// Side wall.
-			side_wall(wall);
-			translate([0, 0, wall - eps])
-			difference() {
-				side_wall(reel_width - eps);
-				internal_cutouts(reel_width * 2);
+				// Side wall.
+				side_wall(wall);
+				translate([0, 0, wall - eps])
+				difference() {
+					side_wall(reel_width - eps);
+					internal_cutouts(reel_width * 2);
+				}
 			}
+			
+			// Threaded rod holes.
+			rod_holes(rod_diam);
+			
+			// Tape rest strengthening pin.
+			translate(tape_rest_pos)
+				cylinder(h = 100, d = 5, center = true);
 		}
-		
-		rod_holes(rod_diam);
+
+		// Test the tape rest section for fitment and strength.
+		if (test_rest)
+		translate(tape_rest_pos)
+			cube([tape_rest * 6, tape_rest * 11, 100], center = true);
 	}
 }
 
@@ -158,4 +191,4 @@ if ($preview) {
 
 // Reel holder.
 holder_module(reel_diam, reel_hole_diam, holder_pocket_depth,
-	thread_rod_diam, wall = holder_wall);
+	thread_rod_diam, wall = holder_wall, test_rest = true);
